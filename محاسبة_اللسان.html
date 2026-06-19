@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>محاسبة اللسان</title>
+<style>
+  :root{
+    --ink:#1f2f36;
+    --ink-soft:#33454d;
+    --paper:#ecdfc2;
+    --paper-soft:#f4ead2;
+    --gold:#b07f2c;
+    --gold-deep:#8a611f;
+    --sage:#4f6e5d;
+    --sage-soft:#dfe9e1;
+    --rose:#8c3340;
+    --rose-soft:#f1dcdd;
+    --muted:#6b5d47;
+    --line:rgba(31,47,54,0.14);
+    --shadow:0 10px 30px rgba(31,47,54,0.18);
+    --radius:18px;
+    --serif:"Traditional Arabic","Amiri","Noto Naskh Arabic",Georgia,serif;
+    --sans:"Segoe UI","Tahoma","Geneva",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 12% 0%, rgba(176,127,44,0.10), transparent 40%),
+      radial-gradient(circle at 90% 8%, rgba(76,110,93,0.12), transparent 45%),
+      var(--ink);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .screen{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(31,47,54,0.025) 0px, rgba(31,47,54,0.025) 1px, transparent 1px, transparent 34px);
+    box-shadow:var(--shadow);
+    padding-bottom:56px;
+  }
+
+  /* ---------- HEADER ---------- */
+  header.hero{
+    background:linear-gradient(160deg, var(--ink) 0%, var(--ink-soft) 70%);
+    color:var(--paper-soft);
+    padding:30px 22px 26px;
+    border-bottom:3px solid var(--gold);
+    position:relative;
+    overflow:hidden;
+  }
+  header.hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 85% -10%, rgba(176,127,44,0.35), transparent 55%);
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-size:12.5px;
+    letter-spacing:.5px;
+    color:#cdb98a;
+    margin:0 0 6px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;}
+  h1.title{
+    font-family:var(--serif);
+    font-size:30px;
+    margin:0 0 10px;
+    font-weight:700;
+    line-height:1.25;
+  }
+  .ayah-card{
+    margin-top:14px;
+    padding:16px 16px 14px;
+    background:rgba(244,234,210,0.06);
+    border:1px solid rgba(244,234,210,0.18);
+    border-radius:14px;
+    position:relative;
+  }
+  .ayah-text{
+    font-family:var(--serif);
+    font-size:19px;
+    line-height:2.1;
+    color:#f4ead2;
+    margin:0 0 8px;
+  }
+  .ayah-ref{
+    font-size:12px;
+    color:#cdb98a;
+    text-align:left;
+  }
+  .hero-note{
+    font-size:13.5px;
+    line-height:1.9;
+    color:#d9cfb4;
+    margin:14px 0 0;
+  }
+
+  /* ---------- SECTION HEADINGS ---------- */
+  .section{padding:22px 20px 4px;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:4px;
+  }
+  .section-head h2{
+    font-family:var(--serif);
+    font-size:21px;
+    margin:0;
+    color:var(--ink);
+  }
+  .section-head .date-pill{
+    font-size:12px;
+    background:var(--gold);
+    color:#fff8e8;
+    padding:4px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .section-sub{
+    font-size:13px;
+    color:var(--muted);
+    margin:2px 0 16px;
+    line-height:1.7;
+  }
+
+  /* ---------- CHECKLIST ---------- */
+  .item-card{
+    background:var(--paper-soft);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 14px 12px;
+    margin-bottom:12px;
+    transition:border-color .25s, background .25s;
+  }
+  .item-card[data-status="ok"]{ border-color:rgba(79,110,93,0.45); background:var(--sage-soft); }
+  .item-card[data-status="needs"]{ border-color:rgba(140,51,64,0.4); background:var(--rose-soft); }
+  .item-top{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+  }
+  .item-label{
+    font-size:15px;
+    font-weight:600;
+    line-height:1.55;
+    color:var(--ink);
+  }
+  .item-hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:3px;
+    line-height:1.6;
+  }
+  .toggle-row{
+    display:flex; gap:8px; margin-top:12px;
+  }
+  .toggle-btn{
+    flex:1;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:10px;
+    padding:8px 6px;
+    font-size:13px;
+    font-family:var(--sans);
+    cursor:pointer;
+    color:var(--ink-soft);
+    transition:transform .12s, background .2s, color .2s, border-color .2s;
+  }
+  .toggle-btn:active{transform:scale(.97);}
+  .toggle-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+  .toggle-btn.ok.active{background:var(--sage); border-color:var(--sage); color:#fff;}
+  .toggle-btn.needs.active{background:var(--rose); border-color:var(--rose); color:#fff;}
+
+  textarea.note{
+    width:100%;
+    margin-top:6px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:12px;
+    font-family:var(--sans);
+    font-size:14px;
+    color:var(--ink);
+    resize:vertical;
+    min-height:70px;
+  }
+  textarea.note:focus-visible{outline:2px solid var(--gold); outline-offset:1px;}
+
+  /* ---------- SEAL / SAVE ---------- */
+  .seal-zone{
+    padding:18px 20px 6px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .seal-btn{
+    width:108px; height:108px;
+    border-radius:50%;
+    border:3px solid var(--gold-deep);
+    background:radial-gradient(circle at 35% 30%, #c79a3f, var(--gold-deep) 70%);
+    color:#fff8e8;
+    font-family:var(--serif);
+    font-size:15px;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(138,97,31,0.45);
+    transition:transform .18s ease;
+    position:relative;
+  }
+  .seal-btn:active{transform:scale(.93) rotate(-3deg);}
+  .seal-btn:focus-visible{outline:2px solid var(--ink); outline-offset:4px;}
+  .seal-status{
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    min-height:18px;
+  }
+  @keyframes sealPress{
+    0%{transform:scale(1) rotate(0deg);}
+    40%{transform:scale(.85) rotate(-8deg);}
+    70%{transform:scale(1.06) rotate(3deg);}
+    100%{transform:scale(1) rotate(0deg);}
+  }
+  .seal-btn.pressed{animation:sealPress .5s ease;}
+  @media (prefers-reduced-motion: reduce){
+    .seal-btn.pressed{animation:none;}
+    .toggle-btn{transition:none;}
+  }
+
+  /* ---------- STATS ---------- */
+  .stats-row{
+    display:flex; gap:10px; padding:0 20px 6px;
+  }
+  .stat-box{
+    flex:1;
+    background:var(--paper-soft);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 10px;
+    text-align:center;
+  }
+  .stat-num{
+    font-family:var(--serif);
+    font-size:24px;
+    color:var(--gold-deep);
+    display:block;
+  }
+  .stat-label{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+
+  /* ---------- HISTORY ---------- */
+  .history-list{padding:0 20px;}
+  .day-entry{
+    border:1px solid var(--line);
+    border-radius:14px;
+    margin-bottom:10px;
+    overflow:hidden;
+    background:var(--paper-soft);
+  }
+  .day-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 14px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .day-head .d-date{font-size:14px; font-weight:600;}
+  .day-head .d-score{
+    font-size:12px;
+    padding:3px 9px;
+    border-radius:999px;
+    color:#fff;
+  }
+  .day-body{
+    display:none;
+    padding:0 14px 14px;
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.8;
+  }
+  .day-entry.open .day-body{display:block;}
+  .day-body ul{margin:6px 0; padding-right:18px;}
+  .day-body .d-note{
+    margin-top:8px;
+    background:#fff;
+    border-radius:10px;
+    padding:8px 10px;
+    color:var(--ink);
+    border:1px dashed var(--line);
+  }
+  .empty-history{
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    padding:18px 10px;
+    border:1px dashed var(--line);
+    border-radius:14px;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    margin-top:8px;
+    padding:22px 20px 28px;
+    border-top:1px solid var(--line);
+  }
+  footer .reflect{
+    font-family:var(--serif);
+    font-size:15px;
+    color:var(--ink-soft);
+    line-height:1.9;
+    margin:0 0 14px;
+  }
+  .reset-link{
+    font-size:12px;
+    color:var(--muted);
+    text-decoration:underline;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    font-family:var(--sans);
+  }
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--paper-soft);
+    padding:10px 18px; border-radius:999px; font-size:13px;
+    opacity:0; transition:opacity .25s, transform .25s;
+    pointer-events:none; z-index:50;
+    max-width:90%;
+    text-align:center;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <header class="hero">
+    <p class="eyebrow"><span class="dot"></span> محاسبة اليوم</p>
+    <h1 class="title">مراقبة اللسان</h1>
+    <div class="ayah-card">
+      <p class="ayah-text">يَا أَيُّهَا الَّذِينَ آمَنُوا لَا تَقُولُوا رَاعِنَا وَقُولُوا انْظُرْنَا وَاسْمَعُوا ۗ وَلِلْكَافِرِينَ عَذَابٌ أَلِيمٌ</p>
+      <p class="ayah-ref">سورة البقرة — آية ١٠٤</p>
+    </div>
+    <p class="hero-note">كلمة واحدة قد تُحرَّف أو تُفهم خطأ أو تُستغل للسخرية. هذه الصفحة تساعدك على مراجعة كلامك كل يوم بصدق، كما يراجع الكاتب صفحته قبل أن يختمها.</p>
+  </header>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>محاسبة اليوم</h2>
+      <span class="date-pill" id="todayPill">—</span>
+    </div>
+    <p class="section-sub">راجع كلامك اليوم بصدق. لكل بند اختر الحالة التي تصف يومك.</p>
+
+    <div id="checklist"></div>
+
+    <textarea class="note" id="noteInput" placeholder="ملاحظة عن كلامك اليوم — موقف وقع، عبارة ندمت عليها، أو شيء تريد تذكّره غدًا..."></textarea>
+  </section>
+
+  <div class="seal-zone">
+    <button class="seal-btn" id="sealBtn">ختم اليوم</button>
+    <p class="seal-status" id="sealStatus">لم يُختم اليوم بعد</p>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>سجل المسير</h2></div>
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-num" id="statStreak">0</span><span class="stat-label">يوم متتالي</span></div>
+      <div class="stat-box"><span class="stat-num" id="statTotal">0</span><span class="stat-label">يوم تمت محاسبته</span></div>
+      <div class="stat-box"><span class="stat-num" id="statRate">—</span><span class="stat-label">نسبة السلامة</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>الأيام السابقة</h2></div>
+    <div class="history-list" id="historyList">
+      <div class="empty-history">لا توجد أيام مسجّلة بعد. اختم يومك لتبدأ السجل.</div>
+    </div>
+  </section>
+
+  <footer>
+    <p class="reflect">"وَاسْمَعُوا" — هل استمعت اليوم أكثر مما تكلمت؟ هل كان كلامك واضحًا بريئًا من اللبس والإيذاء؟</p>
+    <button class="reset-link" id="resetBtn">مسح جميع السجلات من هذا الجهاز</button>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const ITEMS = [
+    { id:"clarity", label:"وضوح الكلام", hint:"تجنّبت الألفاظ التي تُفهم خطأ أو تُستغل ضدي." },
+    { id:"backbite", label:"الغيبة والنميمة", hint:"لم أتكلم في غياب أحد بما يكرهه، ولم أنقل كلامًا بين الناس." },
+    { id:"mockery", label:"السخرية والاستهزاء", hint:"لم أستهزئ بأحد أو بشيء من الدين أو العلم." },
+    { id:"truth", label:"الصدق", hint:"لم أكذب، ولم أُجمّل كلامًا على حساب الحقيقة." },
+    { id:"manners", label:"الأدب في الحديث", hint:"تحدثت بأدب مع الوالدين والمعلمين وأهل العلم ومن حولي." },
+    { id:"listening", label:"الاستماع والانقياد", hint:"استمعت لمن ينصحني أو يعلّمني، ولم أردّ بتسرّع." }
+  ];
+
+  const screen = {
+    todayPill: document.getElementById("todayPill"),
+    checklist: document.getElementById("checklist"),
+    noteInput: document.getElementById("noteInput"),
+    sealBtn: document.getElementById("sealBtn"),
+    sealStatus: document.getElementById("sealStatus"),
+    statStreak: document.getElementById("statStreak"),
+    statTotal: document.getElementById("statTotal"),
+    statRate: document.getElementById("statRate"),
+    historyList: document.getElementById("historyList"),
+    resetBtn: document.getElementById("resetBtn"),
+    toast: document.getElementById("toast")
+  };
+
+  function todayKey(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function formatDateArabic(key){
+    const [y,m,d] = key.split("-").map(Number);
+    const months = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+    return `${d} ${months[m-1]} ${y}`;
+  }
+
+  const TODAY = todayKey();
+  let state = { items:{}, note:"" };
+  let index = []; // array of date keys, sealed only
+  let sealedToday = false;
+
+  function showToast(msg){
+    screen.toast.textContent = msg;
+    screen.toast.classList.add("show");
+    setTimeout(()=>screen.toast.classList.remove("show"), 2200);
+  }
+
+  function renderChecklist(){
+    screen.checklist.innerHTML = "";
+    ITEMS.forEach(item=>{
+      const status = state.items[item.id] || null;
+      const card = document.createElement("div");
+      card.className = "item-card";
+      card.dataset.status = status || "";
+      card.innerHTML = `
+        <div class="item-top">
+          <div>
+            <div class="item-label">${item.label}</div>
+            <div class="item-hint">${item.hint}</div>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <button type="button" class="toggle-btn ok ${status==='ok'?'active':''}" data-id="${item.id}" data-val="ok">سلمت اليوم</button>
+          <button type="button" class="toggle-btn needs ${status==='needs'?'active':''}" data-id="${item.id}" data-val="needs">أحتاج تحسين</button>
+        </div>
+      `;
+      screen.checklist.appendChild(card);
+    });
+
+    screen.checklist.querySelectorAll(".toggle-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.dataset.id, val = btn.dataset.val;
+        if(sealedToday){ showToast("اليوم مختوم بالفعل — يمكنك تعديل غدًا"); return; }
+        state.items[id] = (state.items[id] === val) ? null : val;
+        renderChecklist();
+      });
+    });
+  }
+
+  async function loadDay(key){
+    try{
+      const res = await window.storage.get(`tongue-log:${key}`, false);
+      if(res && res.value){
+        return JSON.parse(res.value);
+      }
+    }catch(e){ /* no entry yet */ }
+    return { items:{}, note:"", sealed:false };
+  }
+
+  async function loadIndex(){
+    try{
+      const res = await window.storage.get("tongue-log:index", false);
+      if(res && res.value) return JSON.parse(res.value);
+    }catch(e){ /* none yet */ }
+    return [];
+  }
+
+  async function saveIndex(){
+    try{
+      await window.storage.set("tongue-log:index", JSON.stringify(index), false);
+    }catch(e){ console.error("فشل حفظ الفهرس", e); }
+  }
+
+  async function saveDay(key, data){
+    try{
+      const res = await window.storage.set(`tongue-log:${key}`, JSON.stringify(data), false);
+      if(!res){ showToast("تعذّر الحفظ، حاول مرة أخرى"); return false; }
+      return true;
+    }catch(e){
+      console.error(e);
+      showToast("تعذّر الحفظ، حاول مرة أخرى");
+      return false;
+    }
+  }
+
+  function computeScore(items){
+    const vals = Object.values(items).filter(Boolean);
+    if(vals.length===0) return null;
+    const ok = vals.filter(v=>v==="ok").length;
+    return Math.round((ok/vals.length)*100);
+  }
+
+  function colorForScore(score){
+    if(score===null) return "var(--muted)";
+    if(score>=80) return "var(--sage)";
+    if(score>=50) return "var(--gold-deep)";
+    return "var(--rose)";
+  }
+
+  async function renderHistory(){
+    const dates = [...index].filter(d=>d!==TODAY).sort((a,b)=>b.localeCompare(a));
+    if(dates.length===0){
+      screen.historyList.innerHTML = `<div class="empty-history">لا توجد أيام مسجّلة بعد. اختم يومك لتبدأ السجل.</div>`;
+      return;
+    }
+    screen.historyList.innerHTML = "";
+    for(const key of dates){
+      const data = await loadDay(key);
+      const score = computeScore(data.items || {});
+      const entry = document.createElement("div");
+      entry.className = "day-entry";
+      const itemsHtml = ITEMS.map(it=>{
+        const v = (data.items||{})[it.id];
+        if(!v) return "";
+        const label = v==="ok" ? "سلمت" : "أحتاج تحسين";
+        return `<li>${it.label}: ${label}</li>`;
+      }).join("");
+      entry.innerHTML = `
+        <div class="day-head">
+          <span class="d-date">${formatDateArabic(key)}</span>
+          <span class="d-score" style="background:${colorForScore(score)}">${score===null?"—":score+"%"}</span>
+        </div>
+        <div class="day-body">
+          <ul>${itemsHtml || "<li>لم تُسجَّل بنود لهذا اليوم</li>"}</ul>
+          ${data.note ? `<div class="d-note">${escapeHtml(data.note)}</div>` : ""}
+        </div>
+      `;
+      entry.querySelector(".day-head").addEventListener("click", ()=>{
+        entry.classList.toggle("open");
+      });
+      screen.historyList.appendChild(entry);
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderStats(){
+    const sortedDates = [...index].sort((a,b)=>b.localeCompare(a));
+    screen.statTotal.textContent = sortedDates.length;
+
+    // streak: consecutive days ending today or yesterday
+    let streak = 0;
+    let cursor = new Date();
+    const allSet = new Set(sortedDates);
+    while(true){
+      const y = cursor.getFullYear();
+      const m = String(cursor.getMonth()+1).padStart(2,"0");
+      const d = String(cursor.getDate()).padStart(2,"0");
+      const key = `${y}-${m}-${d}`;
+      if(allSet.has(key) || (key===TODAY && sealedToday)){
+        streak++;
+        cursor.setDate(cursor.getDate()-1);
+      } else break;
+    }
+    screen.statStreak.textContent = streak;
+
+    // overall rate
+    (async ()=>{
+      let okCount=0, totalCount=0;
+      for(const key of sortedDates){
+        const data = await loadDay(key);
+        Object.values(data.items||{}).forEach(v=>{
+          if(v){ totalCount++; if(v==="ok") okCount++; }
+        });
+      }
+      screen.statRate.textContent = totalCount? Math.round((okCount/totalCount)*100)+"%" : "—";
+    })();
+  }
+
+  function updateSealUI(){
+    if(sealedToday){
+      screen.sealBtn.textContent = "تم الختم ✓";
+      screen.sealStatus.textContent = "اليوم مختوم — بارك الله فيك";
+      screen.sealBtn.disabled = false;
+    } else {
+      screen.sealBtn.textContent = "ختم اليوم";
+      screen.sealStatus.textContent = "لم يُختم اليوم بعد";
+    }
+  }
+
+  async function init(){
+    screen.todayPill.textContent = formatDateArabic(TODAY);
+    index = await loadIndex();
+    const todayData = await loadDay(TODAY);
+    state.items = todayData.items || {};
+    state.note = todayData.note || "";
+    sealedToday = !!todayData.sealed;
+    screen.noteInput.value = state.note;
+    renderChecklist();
+    updateSealUI();
+    renderStats();
+    await renderHistory();
+  }
+
+  screen.noteInput.addEventListener("input", ()=>{
+    state.note = screen.noteInput.value;
+  });
+
+  screen.sealBtn.addEventListener("click", async ()=>{
+    if(sealedToday){
+      showToast("هذا اليوم مختوم بالفعل");
+      return;
+    }
+    const filled = Object.values(state.items).filter(Boolean).length;
+    if(filled===0){
+      showToast("راجع بندًا واحدًا على الأقل قبل الختم");
+      return;
+    }
+    screen.sealBtn.classList.add("pressed");
+    setTimeout(()=>screen.sealBtn.classList.remove("pressed"), 500);
+
+    const data = { items: state.items, note: state.note, sealed:true, sealedAt: Date.now() };
+    const ok = await saveDay(TODAY, data);
+    if(ok){
+      sealedToday = true;
+      if(!index.includes(TODAY)){ index.push(TODAY); await saveIndex(); }
+      updateSealUI();
+      renderStats();
+      await renderHistory();
+      showToast("تم ختم اليوم");
+    }
+  });
+
+  screen.resetBtn.addEventListener("click", async ()=>{
+    if(!confirm("هل تريد حذف جميع سجلات المحاسبة من هذا الجهاز؟ لا يمكن التراجع.")) return;
+    try{
+      for(const key of index){
+        await window.storage.delete(`tongue-log:${key}`, false);
+      }
+      await window.storage.delete("tongue-log:index", false);
+    }catch(e){ /* ignore missing keys */ }
+    index = [];
+    state = { items:{}, note:"" };
+    sealedToday = false;
+    screen.noteInput.value = "";
+    renderChecklist();
+    updateSealUI();
+    renderStats();
+    await renderHistory();
+    showToast("تم مسح السجلات");
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
